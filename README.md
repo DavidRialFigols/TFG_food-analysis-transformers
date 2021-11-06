@@ -1,1 +1,1 @@
-# TFG_food-analysis-transformers
+# TFG Applying Visual Transformers for Food Image Analysis
