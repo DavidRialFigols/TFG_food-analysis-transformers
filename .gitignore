@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# datasets
+food-5.zip
+food-36.zip
+food-101.zip
+food_ai_iccv.zip
