@@ -1,3 +1,8 @@
+# Datasets
+food-5/
+food-36/
+food_ai_iccv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
