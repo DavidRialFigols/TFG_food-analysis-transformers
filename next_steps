@@ -1,0 +1,3 @@
+mesurar variancia de les diferents respostes
+aplicar un montecarlo sobre les capes MLP i veure la variancia en les respostes
+buscar montecarlo dropout sobre transformers

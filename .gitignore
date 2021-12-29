@@ -5,6 +5,9 @@ food_ai_iccv/
 results/
 cswin_base_224.pth
 
+# Virtual environment
+tfg-env/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
