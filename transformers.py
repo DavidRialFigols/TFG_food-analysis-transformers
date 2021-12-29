@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--transformer', help='Transformer to use', required=True, type=str)
 
 random.seed(42)
-num_classes = 36
+num_classes = 101
 using_dataset = f"food-{num_classes}"
 using_transformer = parser.parse_args().transformer
 
@@ -97,12 +97,7 @@ opt = create_optimizer_v2(model, lr=1e-3)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 if using_transformer == 'CSWin':
-    old_dict = model.state_dict()
-    print(old_dict)
     model = load_checkpoint(model, 'cswin_base_224.pth')
-    new_dict = model.state_dict()
-    print("==============================================")
-    print(new_dict)
 #     checkpoint = torch.load('upernet_cswin_base.pth')
 #     print(checkpoint)
 #     model.load_state_dict(checkpoint['state_dict'])
@@ -117,9 +112,12 @@ if using_transformer == 'CSWin':
 
 model = model.to(device)
 
+output_dir = f"./checkpoints/{using_dataset}/{using_transformer}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+os.system(f"mkdir {output_dir}")
+
 EPOCHS = 20
-df_val = pd.DataFrame()
-df_train = pd.DataFrame()
+# df_val = pd.DataFrame()
+# df_train = pd.DataFrame()
 
 previous_loss = 100
 # matrices_to_block = ['blocks.1.attn.qkv.weight', 'blocks.2.attn.qkv.weight']
@@ -173,8 +171,15 @@ for epoch in range(EPOCHS):
             
     df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
     df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
+    df_val.to_csv(f"results/{using_transformer}_epoch_{epoch}_val.csv")
     loss = torch.stack(losses_test).sum() / len(dl_test.dataset)
     acc = torch.stack(accs_test).sum() / len(dl_test.dataset)
+    
+    try:
+        os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_train.csv")
+        os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_val.csv")
+    except:
+        continue
     
     print(f'Epoch: {epoch+1:>2}    Loss: {loss.item():.3f}    Accuracy: {acc:.3f}')
     # if previous_loss >= loss.item():
