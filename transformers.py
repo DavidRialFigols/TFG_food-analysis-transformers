@@ -21,11 +21,17 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--transformer', help='Transformer to use', required=True, type=str)
+parser.add_argument('-g', '--gpu', help='GPU to use', required=True, type=str)
+parser.add_argument('-l', '--load_pretrain', help='directory with model', type=str)
+parser.add_argument('-e', '--start_epoch', help='last epoch of the pretrained model', type=int)
 
 random.seed(42)
 num_classes = 101
 using_dataset = f"food-{num_classes}"
 using_transformer = parser.parse_args().transformer
+using_gpu = parser.parse_args().gpu
+load_pretrain = parser.parse_args().load_pretrain
+start_epoch = parser.parse_args().start_epoch
 
 models_transformers = {
     'ViT': 'vit_base_patch16_224_in21k',
@@ -53,7 +59,7 @@ data_transform_test = transforms.Compose(
 ds_train = datasets.ImageFolder(f"{using_dataset}/train", transform=data_transform_train)
 ds_test = datasets.ImageFolder(f"{using_dataset}/test", transform=data_transform_test)
 
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
 dl_test = DataLoader(ds_test, batch_size=BATCH_SIZE, shuffle=False)
 dl_train
@@ -95,6 +101,7 @@ model = timm.create_model(models_transformers[using_transformer], pretrained=Tru
 opt = create_optimizer_v2(model, lr=1e-3)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device(f"cuda:{using_gpu}")
 
 if using_transformer == 'CSWin':
     model = load_checkpoint(model, 'cswin_base_224.pth')
@@ -102,24 +109,34 @@ if using_transformer == 'CSWin':
 #     print(checkpoint)
 #     model.load_state_dict(checkpoint['state_dict'])
 
-# PATH = f"./checkpoints/{using_dataset}/SWin/20211123-232319/model_18.pt"
-# checkpoint = torch.load(PATH)
-# model.load_state_dict(checkpoint['model_state_dict'])
-# opt.load_state_dict(checkpoint['optimizer_state_dict'])
-# last_epoch = checkpoint['epoch']
-# loss = checkpoint['loss']
-# acc = checkpoint['acc']
+previous_time = 0
+if load_pretrain and start_epoch:
+    print('Loading checkpoint')
+    PATH = load_pretrain
+    checkpoint = torch.load(PATH)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    opt.load_state_dict(checkpoint['optimizer_state_dict'])
+    last_epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+    acc = checkpoint['acc']
+    previous_time = checkpoint['time']
+    for state in opt.state_dict()['state'].values():
+        for k,v in state.items():
+            state[k] = v.cuda(int(using_gpu))
+else:
+    start_epoch = 0
 
 model = model.to(device)
 
 output_dir = f"./checkpoints/{using_dataset}/{using_transformer}/{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 os.system(f"mkdir {output_dir}")
+# output_dir = "./checkpoints/food-101/DeiT/20211230-101645"
 
-EPOCHS = 20
-# df_val = pd.DataFrame()
-# df_train = pd.DataFrame()
+EPOCHS = 50
+df_val = pd.DataFrame()
+df_train = pd.DataFrame()
 
-previous_loss = 100
+# previous_loss = 100
 # matrices_to_block = ['blocks.1.attn.qkv.weight', 'blocks.2.attn.qkv.weight']
 # model.train()
 # for name, param in model.named_parameters():
@@ -128,7 +145,9 @@ previous_loss = 100
 #         print(name, param)
 
 
-for epoch in range(EPOCHS):
+print('TRAINING STARTED')
+start_time = time.time()
+for epoch in range(start_epoch, EPOCHS):
     losses_test, accs_test = [], []
     model.train()
 #     for name, param in model.named_parameters():
@@ -180,8 +199,8 @@ for epoch in range(EPOCHS):
         os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_val.csv")
     except:
         continue
-    
-    print(f'Epoch: {epoch+1:>2}    Loss: {loss.item():.3f}    Accuracy: {acc:.3f}')
+    acc_time = time.time() - start_time + previous_time
+    print(f'Epoch: {epoch+1:>2}    Loss: {loss.item():.3f}    Accuracy: {acc:.3f}    Acu.Time: {acc_time:.3f}')
     # if previous_loss >= loss.item():
     #     previous_loss = loss.item()
     # elif previous_loss < loss.item()-0.5:
@@ -191,5 +210,6 @@ for epoch in range(EPOCHS):
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': opt.state_dict(),
         'loss': loss.item(),
-        'acc': acc
+        'acc': acc,
+        'time': acc_time
     }, f"{output_dir}/model_{epoch}.pt")
