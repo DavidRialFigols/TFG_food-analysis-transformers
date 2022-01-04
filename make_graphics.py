@@ -24,7 +24,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--transformer', help='Transformer to use', required=True, type=str)
 parser.add_argument('-d', '--datetime', help='Datetime of the checkpoint', required=True, type=str)
-parser.add_argument('-n', '--number_epochs', help='Number of epochs', required=True, type=int)
+parser.add_argument('-n', '--num_epochs', help='Number of epochs', required=True, type=int)
 
 random.seed(42)
 num_classes = 101
