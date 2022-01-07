@@ -58,7 +58,8 @@ def load_model_checkpoint(epoch, datetime):
     last_epoch = checkpoint['epoch']
     loss = checkpoint['loss']
     acc = checkpoint['acc']
-    print(f"epoch {epoch} | accuracy: {acc} | loss: {loss}")
+    acc_time = checkpoint['time']
+    print(f"epoch {epoch} | accuracy: {acc} | loss: {loss} | acc_time: {acc_time}")
     models_dict.append(checkpoint['model_state_dict'])
     accs.append(acc)
     del checkpoint
