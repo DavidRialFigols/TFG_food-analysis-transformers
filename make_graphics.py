@@ -111,8 +111,8 @@ def graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig
 	        k_svdvals = k_svdvals
 	        v_svdvals = v_svdvals
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15)
-	        plt.savefig(f"{output}q.png", dpi=750).set(title=f"{using_transformer} - Singular values of the Q matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
+	        sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the Q matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
+	        plt.savefig(f"{output}q.png", dpi=750)
 	        plt.close()
 
 
@@ -624,7 +624,7 @@ def graphics_sv_layers_epochs_mlp(models_dict, using_transformer, fig_size, laye
 	            # make the heatmaps
 	            mlp_svdvals = mlp_svdvals_means
 	            fig, ax = plt.subplots(figsize=fig_size)
-	            sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15)
+	            sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the MLP {mlp_block} in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	            plt.savefig(f"{output}.png", dpi=750)
 	            plt.close()
         
@@ -668,7 +668,7 @@ def graphics_sv_layers_blocks_mlp(models_dict, using_transformer, fig_size, laye
                 indexs = [i for i in range(mlp_svdvals.shape[1]) if i%4==0]
             else:
                 indexs = [i for i in range(mlp_svdvals.shape[1])]
-            sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15)
+            sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the MLP {mlp_block} in the {layer} {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
             plt.savefig(f"{output}.png", dpi=750)
             plt.close()
 
@@ -698,7 +698,7 @@ def graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig
 	        # make the heatmaps
 	        w0_svdvals = w0_svdvals
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the W0 matrices in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}.png", dpi=750)
 	        plt.close()
 
@@ -734,9 +734,9 @@ def graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig
         fig, ax = plt.subplots(figsize=fig_size)
         if w0_svdvals.shape[1] > 12:
             indexs = [i for i in range(w0_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=w0_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(w0_svdvals.shape[1])]
+        sns.scatterplot(data=w0_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Singular values of the W0 matrices in the block {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}_bloc-{n}_singular_values.png", dpi=750)
         plt.close()
 
@@ -746,20 +746,20 @@ def graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig
     w0_diffs = pd.DataFrame(w0_diffs)
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=w0_ranks.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=w0_ranks.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the ranks of the W0 matrices", ylabel="Rank", xlabel = "Epoch")
     plt.legend(labels=w0_ranks.columns, loc='upper right')
     plt.savefig(f"{output}_ranks.png", dpi=750)
     plt.close()
 
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=w0_norms.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=w0_norms.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the Frobenius norms of the W0 matrices", ylabel="Norm", xlabel = "Epoch")
     plt.legend(labels=w0_norms.columns, loc='upper right')
     plt.savefig(f"{output}_norms.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=w0_diffs.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=w0_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the W0 matrices", ylabel="Absolute difference", xlabel = "Epoch")
     plt.legend(labels=w0_diffs.columns, loc='upper right')
     plt.savefig(f"{output}_diffs.png", dpi=750)
     plt.close()
@@ -798,7 +798,7 @@ def graphics_sv_layers_epochs_w0(models_dict, using_transformer, fig_size, layer
 	        # make the heatmaps
 	        w0_svdvals = w0_svdvals_means
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the W0 in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}.png", dpi=750)
 	        plt.close()
         
@@ -837,9 +837,9 @@ def graphics_sv_layers_blocks_w0(models_dict, using_transformer, fig_size, layer
         fig, ax = plt.subplots(figsize=fig_size)
         if w0_svdvals.shape[1] > 12:
             indexs = [i for i in range(w0_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=w0_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=w0_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(w0_svdvals.shape[1])]
+        sns.scatterplot(data=w0_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the W0 matrices in the {layer} {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}.png", dpi=750)
         plt.close()
 
@@ -864,7 +864,7 @@ def graphics_global_variables(models_dict, using_transformer, mat_size, num_bloc
     
     ct_diffs = pd.DataFrame(ct_diffs).T
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=ct_diffs, markers=True, legend=False)
+    sns.lineplot(data=ct_diffs, markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the class token matrix", ylabel="Absolute difference", xlabel = "Epoch")
     #plt.legend(labels=ct_diffs.columns, loc='upper right')
     plt.savefig(f"{output}_ct_diffs.png", dpi=750)
     plt.close()
@@ -872,7 +872,7 @@ def graphics_global_variables(models_dict, using_transformer, mat_size, num_bloc
     if has_positional_embedding: 
         pe_diffs = pd.DataFrame(pe_diffs).T
         fig, ax = plt.subplots(figsize=fig_size)
-        sns.lineplot(data=pe_diffs, markers=True, legend=False)
+        sns.lineplot(data=pe_diffs, markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the positional embedding matrix", ylabel="Absolute difference", xlabel = "Epoch")
         #plt.legend(labels=ct_diffs.columns, loc='upper right')
         plt.savefig(f"{output}_pe_diffs.png", dpi=750)
         plt.close()
@@ -880,7 +880,7 @@ def graphics_global_variables(models_dict, using_transformer, mat_size, num_bloc
     if has_distillation_token:
         dt_diffs = pd.DataFrame(dt_diffs).T
         fig, ax = plt.subplots(figsize=fig_size)
-        sns.lineplot(data=dt_diffs, markers=True, legend=False)
+        sns.lineplot(data=dt_diffs, markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the distillation token matrix", ylabel="Absolute difference", xlabel = "Epoch")
         #plt.legend(labels=ct_diffs.columns, loc='upper right')
         plt.savefig(f"{output}_dt_diffs.png", dpi=750)
         plt.close()
@@ -890,26 +890,26 @@ if using_transformer in ['ViT', 'BEiT', 'DeiT']:
     num_blocks = 12
     print('starting sv blocks')
     graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting sv epochs')
-    # graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting ranks')
-    # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting norms')
-    # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting diff epochs')
-    # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting mlp blocks')
-    # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting w0 blocks')
-    # graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # if using_transformer == 'ViT':
-    #     pe, dt = True, False
-    # elif using_transformer == 'BEiT':
-    #     pe, dt = False, False
-    # elif using_transformer == 'DeiT':
-    #     pe, dt = True, True
-    # print('starting global variables')
-    # graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
+    print('starting sv epochs')
+    graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting ranks')
+    graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting norms')
+    graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting diff epochs')
+    graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting mlp blocks')
+    graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting w0 blocks')
+    graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    if using_transformer == 'ViT':
+        pe, dt = True, False
+    elif using_transformer == 'BEiT':
+        pe, dt = False, False
+    elif using_transformer == 'DeiT':
+        pe, dt = True, True
+    print('starting global variables')
+    graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
 
 if using_transformer in ['CSWin', 'SWin']:
     for layer in range(4):
