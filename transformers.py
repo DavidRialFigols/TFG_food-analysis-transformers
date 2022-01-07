@@ -24,6 +24,7 @@ parser.add_argument('-t', '--transformer', help='Transformer to use', required=T
 parser.add_argument('-g', '--gpu', help='GPU to use', required=True, type=str)
 parser.add_argument('-l', '--load_pretrain', help='directory with model', type=str)
 parser.add_argument('-e', '--start_epoch', help='last epoch of the pretrained model', type=int)
+parser.add_argument('-d', '--dynamic_block', default=False, action='store_true')
 
 random.seed(42)
 num_classes = 101
@@ -32,6 +33,7 @@ using_transformer = parser.parse_args().transformer
 using_gpu = parser.parse_args().gpu
 load_pretrain = parser.parse_args().load_pretrain
 start_epoch = parser.parse_args().start_epoch
+dynamic_block = parser.parse_args().dynamic_block
 
 models_transformers = {
     'ViT': 'vit_base_patch16_224_in21k',
@@ -187,7 +189,29 @@ for epoch in range(start_epoch, EPOCHS):
             losses_test.append(loss * images.shape[0])
             val_labels.append(labels.cpu().detach().numpy())
             val_pred.append(pred.cpu().detach().numpy())
-            
+
+    if dynamic_block and epoch > 0:
+        if using_transformer in ['ViT', 'BEiT', 'DeiT']:
+            for block in num_blocks['using_transformer']:
+                qkv_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
+                mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
+                mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
+                w0_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
+                if qkv_diff < 0.01:
+                    print(f"QKV block {block} blocked in epoch {epoch}")
+                    model.named_parameters()[f"blocks.{block}.attn.qkv.weight"].requires_grad = False
+                if mlp1_diff < 0.01:
+                    print(f"MLP1 block {block} blocked in epoch {epoch}")
+                    model.named_parameters()[f"blocks.{block}.mlp.fc1.weight"].requires_grad = False
+                if mlp2_diff < 0.01:
+                    print(f"MLP2 block {block} blocked in epoch {epoch}")
+                    model.named_parameters()[f"blocks.{block}.mlp.fc2.weight"].requires_grad = False
+                if w0_diff < 0.01:
+                    print(f"W0 block {block} blocked in epoch {epoch}")
+                    model.named_parameters()[f"blocks.{block}.attn.proj.weight"].requires_grad = False
+
+    last_model_dict = model.state_dict()
+
     df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
     df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
     df_val.to_csv(f"results/{using_transformer}_epoch_{epoch}_val.csv")
