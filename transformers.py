@@ -43,6 +43,14 @@ models_transformers = {
     'DeiT': 'deit_base_distilled_patch16_224',
 }
 
+num_blocks = {
+    'ViT': 12,
+    'BEiT': 12,
+    'DeiT': 12,
+    'SWin': {0: 2, 1: 2, 2: 18, 3: 2},
+    'CSWin': {1: 2, 2: 4, 3: 32, 4: 2},
+}
+
 data_transform_train = transforms.Compose(
             [transforms.Resize([256,256]),
              transforms.RandomCrop([224,224]),
@@ -146,6 +154,24 @@ df_train = pd.DataFrame()
 #         param.requires_grad = False
 #         print(name, param)
 
+if using_transformer in ['ViT', 'BEiT', 'DeiT']:
+    blocked = [{
+        'qkv': 0,
+        'mlp1': 0,
+        'mlp2': 0,
+        'w0': 0,
+    } for block in num_blocks[using_transformer]]
+elif using_transformer in ['CSWin', 'SWin']:
+    blocked = []
+    for layer in range(4):
+        if using_transformer == 'CSWin':
+            layer += 1
+        blocked.append([{
+                        'qkv': 0,
+                        'mlp1': 0,
+                        'mlp2': 0,
+                        'w0': 0,
+                        } for block in num_blocks[using_transformer][layer]])
 
 print('TRAINING STARTED')
 start_time = time.time()
@@ -197,18 +223,26 @@ for epoch in range(start_epoch, EPOCHS):
                 mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
                 mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
                 w0_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
-                if qkv_diff < 0.01:
-                    print(f"QKV block {block} blocked in epoch {epoch}")
-                    model.named_parameters()[f"blocks.{block}.attn.qkv.weight"].requires_grad = False
-                if mlp1_diff < 0.01:
-                    print(f"MLP1 block {block} blocked in epoch {epoch}")
-                    model.named_parameters()[f"blocks.{block}.mlp.fc1.weight"].requires_grad = False
-                if mlp2_diff < 0.01:
-                    print(f"MLP2 block {block} blocked in epoch {epoch}")
-                    model.named_parameters()[f"blocks.{block}.mlp.fc2.weight"].requires_grad = False
-                if w0_diff < 0.01:
-                    print(f"W0 block {block} blocked in epoch {epoch}")
-                    model.named_parameters()[f"blocks.{block}.attn.proj.weight"].requires_grad = False
+                if qkv_diff < 0.01 and blocked[using_transformer][block]['qkv'] < 2:
+                    blocked[using_transformer][block]['qkv'] += 1
+                    if blocked[using_transformer][block]['qkv'] == 2:
+                        print(f"QKV block {block} blocked in epoch {epoch}")
+                        model.named_parameters()[f"blocks.{block}.attn.qkv.weight"].requires_grad = False
+                if mlp1_diff < 0.01 and blocked[using_transformer][block]['mlp1'] < 2:
+                    blocked[using_transformer][block]['mlp1'] += 1
+                    if blocked[using_transformer][block]['mlp1'] == 2:
+                        print(f"MLP1 block {block} blocked in epoch {epoch}")
+                        model.named_parameters()[f"blocks.{block}.mlp.fc1.weight"].requires_grad = False
+                if mlp2_diff < 0.01 and blocked[using_transformer][block]['mlp2'] < 2:
+                    blocked[using_transformer][block]['mlp2'] += 1
+                    if blocked[using_transformer][block]['mlp2'] == 2:
+                        print(f"MLP2 block {block} blocked in epoch {epoch}")
+                        model.named_parameters()[f"blocks.{block}.mlp.fc2.weight"].requires_grad = False
+                if w0_diff < 0.01 and blocked[using_transformer][block]['w0'] < 2:
+                    blocked[using_transformer][block]['w0'] += 1
+                    if blocked[using_transformer][block]['w0'] == 2:
+                        print(f"W0 block {block} blocked in epoch {epoch}")
+                        model.named_parameters()[f"blocks.{block}.attn.proj.weight"].requires_grad = False
 
     last_model_dict = model.state_dict()
 
