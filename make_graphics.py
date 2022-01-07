@@ -74,7 +74,7 @@ for model in models_dict:
             atributes_model[i] = []
         atributes_model[i].append(model[i])
 
-def graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer=False):
+def graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer=False):
     for epoch, model in enumerate(models_dict): # the epoch is fixed in each graphic
     	if epoch%4==0:
 	        q11 = []
@@ -111,22 +111,22 @@ def graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig
 	        v_svdvals = v_svdvals
 	        fig, ax = plt.subplots(figsize=fig_size)
 	        sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15)
-	        plt.savefig(f"{output}q.png", dpi=750)
+	        plt.savefig(f"{output}q.png", dpi=750).set(title=f"{using_transformer} - Singular values of the Q matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.close()
 
 
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the K matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}k.png", dpi=750)
 	        plt.close()
 
 
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the V matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}v.png", dpi=750)
 	        plt.close()
 
-def graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer=False):
+def graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer=False):
     for n in range(num_blocks):
         q11 = []
         k11 = []
@@ -162,27 +162,27 @@ def graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig
         fig, ax = plt.subplots(figsize=fig_size)
         if q_svdvals.shape[1] > 12:
             indexs = [i for i in range(q_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=q_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(q_svdvals.shape[1])]
+        sns.scatterplot(data=q_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the Q matrix in the block {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}q.png", dpi=750)
         plt.close()
 
         fig, ax = plt.subplots(figsize=fig_size)
         if k_svdvals.shape[1] > 12:
             indexs = [i for i in range(k_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=k_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(k_svdvals.shape[1])]
+        sns.scatterplot(data=k_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the K matrix in the block {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}k.png", dpi=750)
         plt.close()
 
         fig, ax = plt.subplots(figsize=fig_size)
         if v_svdvals.shape[1] > 12:
             indexs = [i for i in range(v_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=v_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(v_svdvals.shape[1])]
+        sns.scatterplot(data=v_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the V matrix in the block {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}v.png", dpi=750)
         plt.close()
         #print(f"epoch {l} | q: {torch.linalg.svdvals(q11[l]).sum()} | k: {torch.linalg.svdvals(k11[l]).sum()} | v: {torch.linalg.svdvals(v11[l]).sum()}")
@@ -225,19 +225,19 @@ def graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_siz
     v_ranks = pd.DataFrame(v_ranks)
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=q_ranks.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=q_ranks.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the ranks of the Q matrices", ylabel="Rank", xlabel = "Epoch")
     plt.legend(labels=q_ranks.columns, loc='upper right')
     plt.savefig(f"{output}q.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=k_ranks.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=k_ranks.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the ranks of the K matrices", ylabel="Rank", xlabel = "Epoch")
     plt.legend(labels=k_ranks.columns, loc='upper right')
     plt.savefig(f"{output}k.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=v_ranks.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=v_ranks.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the ranks of the V matrices", ylabel="Rank", xlabel = "Epoch")
     plt.legend(labels=v_ranks.columns, loc='upper right')
     plt.savefig(f"{output}v.png", dpi=750)
     plt.close()
@@ -280,19 +280,19 @@ def graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_siz
     k_norms = pd.DataFrame(k_norms)
     v_norms = pd.DataFrame(v_norms)
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=q_norms.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=q_norms.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the Frobenius norms of the Q matrices", ylabel="Norm", xlabel = "Epoch")
     plt.legend(labels=q_norms.columns, loc='upper right')
     plt.savefig(f"{output}q.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=k_norms.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=k_norms.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the Frobenius norms of the K matrices", ylabel="Norm", xlabel = "Epoch")
     plt.legend(labels=k_norms.columns, loc='upper right')
     plt.savefig(f"{output}k.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=v_norms.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=v_norms.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the Frobenius norms of the V matrices", ylabel="Norm", xlabel = "Epoch")
     plt.legend(labels=v_norms.columns, loc='upper right')
     plt.savefig(f"{output}v.png", dpi=750)
     plt.close()
@@ -335,19 +335,19 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
     k_diffs = pd.DataFrame(k_diffs)
     v_diffs = pd.DataFrame(v_diffs)
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=q_diffs.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=q_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the Q matrices", ylabel="Absolute difference", xlabel = "Epoch")
     plt.legend(labels=q_diffs.columns, loc='upper right')
     plt.savefig(f"{output}q.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=k_diffs.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=k_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the K matrices", ylabel="Absolute difference", xlabel = "Epoch")
     plt.legend(labels=k_diffs.columns, loc='upper right')
     plt.savefig(f"{output}k.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=v_diffs.iloc[:200, :], markers=True, legend=False)
+    sns.lineplot(data=v_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the V matrices", ylabel="Absolute difference", xlabel = "Epoch")
     plt.legend(labels=v_diffs.columns, loc='upper right')
     plt.savefig(f"{output}v.png", dpi=750)
     plt.close()
@@ -402,19 +402,19 @@ def graphics_sv_layers_epochs(models_dict, using_transformer, fig_size, layers):
 	        k_svdvals = k_svdvals_means
 	        v_svdvals = v_svdvals_means
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the Q matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}q.png", dpi=750)
 	        plt.close()
 
 
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the K matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}k.png", dpi=750)
 	        plt.close()
 
 
 	        fig, ax = plt.subplots(figsize=fig_size)
-	        sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15)
+	        sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the V matrix in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	        plt.savefig(f"{output}v.png", dpi=750)
 	        plt.close()
         
@@ -469,27 +469,29 @@ def graphics_sv_layers_blocks(models_dict, using_transformer, fig_size, layers):
         fig, ax = plt.subplots(figsize=fig_size)
         if q_svdvals.shape[1] > 12:
             indexs = [i for i in range(q_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=q_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=q_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(q_svdvals.shape[1])]
+        if using_transformer == 'CSWin': layer = 'stage'
+        elif using_transformer == 'SWin': layer = 'layer'
+        sns.scatterplot(data=q_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the Q matrix in the {layer} {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}q.png", dpi=750)
         plt.close()
 
         fig, ax = plt.subplots(figsize=fig_size)
         if k_svdvals.shape[1] > 12:
             indexs = [i for i in range(k_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=k_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=k_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(k_svdvals.shape[1])]
+        sns.scatterplot(data=k_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the K matrix in the {layer} {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}k.png", dpi=750)
         plt.close()
 
         fig, ax = plt.subplots(figsize=fig_size)
         if v_svdvals.shape[1] > 12:
             indexs = [i for i in range(v_svdvals.shape[1]) if i%4==0]
-            sns.scatterplot(data=v_svdvals.iloc[:200, indexs], s=15)
         else:
-            sns.scatterplot(data=v_svdvals.iloc[:200, :], s=15)
+            indexs = [i for i in range(v_svdvals.shape[1])]
+        sns.scatterplot(data=v_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Evolution of the singular values of the V matrix in the {layer} {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
         plt.savefig(f"{output}v.png", dpi=750)
         plt.close()
 
@@ -520,7 +522,7 @@ def graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fi
 	            # make the heatmaps
 	            mlp_svdvals = mlp_svdvals
 	            fig, ax = plt.subplots(figsize=fig_size)
-	            sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15)
+	            sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15).set(title=f"{using_transformer} - Singular values of the mlp {mlp_block} in the {epoch}th epoch", ylabel="Singular Value", xlabel = "Position of Singular Value")
 	            plt.savefig(f"{output}.png", dpi=750)
 	            plt.close()
 
@@ -556,9 +558,9 @@ def graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fi
             fig, ax = plt.subplots(figsize=fig_size)
             if mlp_svdvals.shape[1] > 12:
                 indexs = [i for i in range(mlp_svdvals.shape[1]) if i%4==0]
-                sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15)
             else:
-                sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15)
+                indexs = [i for i in range(mlp_svdvals.shape[1])]
+            sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15).set(title=f"{using_transformer} - Singular values of the mlp {mlp_block} in the block {n}", ylabel="Singular Value", xlabel = "Position of Singular Value")
             plt.savefig(f"{output}_bloc-{n}_singular_values.png", dpi=750)
             plt.close()
         
@@ -568,20 +570,20 @@ def graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fi
         mlp_diffs = pd.DataFrame(mlp_diffs)
 
         fig, ax = plt.subplots(figsize=fig_size)
-        sns.lineplot(data=mlp_ranks.iloc[:200, :], markers=True, legend=False)
+        sns.lineplot(data=mlp_ranks.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the ranks of the mlp {mlp_block} matrices", ylabel="Rank", xlabel = "Epoch")
         plt.legend(labels=mlp_ranks.columns, loc='upper right')
         plt.savefig(f"{output}_ranks.png", dpi=750)
         plt.close()
         
 
         fig, ax = plt.subplots(figsize=fig_size)
-        sns.lineplot(data=mlp_norms.iloc[:200, :], markers=True, legend=False)
+        sns.lineplot(data=mlp_norms.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the Frobenius norms of the mlp {mlp_block} matrices", ylabel="Norm", xlabel = "Epoch")
         plt.legend(labels=mlp_norms.columns, loc='upper right')
         plt.savefig(f"{output}_norms.png", dpi=750)
         plt.close()
         
         fig, ax = plt.subplots(figsize=fig_size)
-        sns.lineplot(data=mlp_diffs.iloc[:200, :], markers=True, legend=False)
+        sns.lineplot(data=mlp_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the mlp {mlp_block} matrices", ylabel="Absolute difference", xlabel = "Epoch")
         plt.legend(labels=mlp_diffs.columns, loc='upper right')
         plt.savefig(f"{output}_diffs.png", dpi=750)
         plt.close()
@@ -659,11 +661,13 @@ def graphics_sv_layers_blocks_mlp(models_dict, using_transformer, fig_size, laye
             # plot the graphs
             mlp_svdvals = mlp_svdvals_means
             fig, ax = plt.subplots(figsize=fig_size)
+            if using_transformer == 'CSWin': layer = 'stage'
+            elif using_transformer == 'SWin': layer = 'layer'
             if mlp_svdvals.shape[1] > 12:
                 indexs = [i for i in range(mlp_svdvals.shape[1]) if i%4==0]
-                sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15)
             else:
-                sns.scatterplot(data=mlp_svdvals.iloc[:200, :], s=15)
+                indexs = [i for i in range(mlp_svdvals.shape[1])]
+            sns.scatterplot(data=mlp_svdvals.iloc[:200, indexs], s=15)
             plt.savefig(f"{output}.png", dpi=750)
             plt.close()
 
@@ -885,26 +889,26 @@ if using_transformer in ['ViT', 'BEiT', 'DeiT']:
     num_blocks = 12
     print('starting sv blocks')
     graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting sv epochs')
-    graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting ranks')
-    graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting norms')
-    graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting diff epochs')
-    graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting mlp blocks')
-    graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting w0 blocks')
-    graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    if using_transformer == 'ViT':
-        pe, dt = True, False
-    elif using_transformer == 'BEiT':
-        pe, dt = False, False
-    elif using_transformer == 'DeiT':
-        pe, dt = True, True
-    print('starting global variables')
-    graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
+    # print('starting sv epochs')
+    # graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting ranks')
+    # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting norms')
+    # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting diff epochs')
+    # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting mlp blocks')
+    # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting w0 blocks')
+    # graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # if using_transformer == 'ViT':
+    #     pe, dt = True, False
+    # elif using_transformer == 'BEiT':
+    #     pe, dt = False, False
+    # elif using_transformer == 'DeiT':
+    #     pe, dt = True, True
+    # print('starting global variables')
+    # graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
 
 if using_transformer in ['CSWin', 'SWin']:
     for layer in range(4):
