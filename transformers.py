@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 
 import os
+import copy
 
 import pandas as pd
 
@@ -160,7 +161,7 @@ if using_transformer in ['ViT', 'BEiT', 'DeiT']:
         'mlp1': 0,
         'mlp2': 0,
         'w0': 0,
-    } for block in num_blocks[using_transformer]]
+    } for block in range(num_blocks[using_transformer])]
 elif using_transformer in ['CSWin', 'SWin']:
     blocked = []
     for layer in range(4):
@@ -171,16 +172,17 @@ elif using_transformer in ['CSWin', 'SWin']:
                         'mlp1': 0,
                         'mlp2': 0,
                         'w0': 0,
-                        } for block in num_blocks[using_transformer][layer]])
-
+                        } for block in range(num_blocks[using_transformer][layer])])
+blocked_matrices = []
 print('TRAINING STARTED')
 start_time = time.time()
 for epoch in range(start_epoch, EPOCHS):
+    last_model_dict = copy.deepcopy(model.state_dict())
     losses_test, accs_test = [], []
     model.train()
-#     for name, param in model.named_parameters():
-#         if name in matrices_to_block and param.requires_grad:
-#             print(f"La matriu {name} s'esta modificant!")
+    for name, param in model.named_parameters():
+        if name in blocked_matrices and param.requires_grad:
+            print(f"La matriu {name} s'esta modificant i hauria d'estar bloquejada!")
     
     train_labels = []
     train_pred = []
@@ -216,35 +218,55 @@ for epoch in range(start_epoch, EPOCHS):
             val_labels.append(labels.cpu().detach().numpy())
             val_pred.append(pred.cpu().detach().numpy())
 
-    if dynamic_block and epoch > 0:
+    if dynamic_block:
         if using_transformer in ['ViT', 'BEiT', 'DeiT']:
-            for block in num_blocks['using_transformer']:
-                qkv_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
-                mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
-                mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
-                w0_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{n}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
-                if qkv_diff < 0.01 and blocked[using_transformer][block]['qkv'] < 2:
-                    blocked[using_transformer][block]['qkv'] += 1
-                    if blocked[using_transformer][block]['qkv'] == 2:
+            for block in range(num_blocks[using_transformer]):
+                qkv_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight'])).item())
+                mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc1.weight']-model.state_dict()[f'blocks.{block}.mlp.fc1.weight'])).item())
+                mlp2_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc2.weight']-model.state_dict()[f'blocks.{block}.mlp.fc2.weight'])).item())
+                w0_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.attn.proj.weight']-model.state_dict()[f'blocks.{block}.attn.proj.weight'])).item())
+                print(f"block {block} | qkv: {qkv_diff} | mlp1: {mlp1_diff} | mlp2: {mlp2_diff} | w: {w0_diff}")
+                if qkv_diff < 0.005 and blocked[block]['qkv'] < 2:
+                    blocked[block]['qkv'] += 1
+                    if blocked[block]['qkv'] == 2:
                         print(f"QKV block {block} blocked in epoch {epoch}")
-                        model.named_parameters()[f"blocks.{block}.attn.qkv.weight"].requires_grad = False
-                if mlp1_diff < 0.01 and blocked[using_transformer][block]['mlp1'] < 2:
-                    blocked[using_transformer][block]['mlp1'] += 1
-                    if blocked[using_transformer][block]['mlp1'] == 2:
+                        for name, param in model.named_parameters():
+                            if name == f"blocks.{block}.attn.qkv.weight":
+                                param.requires_grad = False
+                                blocked_matrices.append(name)
+                elif blocked[block]['qkv'] < 2:
+                    blocked[block]['qkv'] = 0
+                if mlp1_diff < 0.005 and blocked[block]['mlp1'] < 2:
+                    blocked[block]['mlp1'] += 1
+                    if blocked[block]['mlp1'] == 2:
                         print(f"MLP1 block {block} blocked in epoch {epoch}")
-                        model.named_parameters()[f"blocks.{block}.mlp.fc1.weight"].requires_grad = False
-                if mlp2_diff < 0.01 and blocked[using_transformer][block]['mlp2'] < 2:
-                    blocked[using_transformer][block]['mlp2'] += 1
-                    if blocked[using_transformer][block]['mlp2'] == 2:
+                        for name, param in model.named_parameters():
+                            if name == f"blocks.{block}.mlp.fc1.weight":
+                                param.requires_grad = False
+                                blocked_matrices.append(name)
+                elif blocked[block]['mlp1'] < 2:
+                    blocked[block]['mlp1'] = 0
+                if mlp2_diff < 0.005 and blocked[block]['mlp2'] < 2:
+                    blocked[block]['mlp2'] += 1
+                    if blocked[block]['mlp2'] == 2:
                         print(f"MLP2 block {block} blocked in epoch {epoch}")
-                        model.named_parameters()[f"blocks.{block}.mlp.fc2.weight"].requires_grad = False
-                if w0_diff < 0.01 and blocked[using_transformer][block]['w0'] < 2:
-                    blocked[using_transformer][block]['w0'] += 1
-                    if blocked[using_transformer][block]['w0'] == 2:
+                        for name, param in model.named_parameters():
+                            if name == f"blocks.{block}.mlp.fc2.weight":
+                                param.requires_grad = False
+                                blocked_matrices.append(name)
+                elif blocked[block]['mlp2'] < 2:
+                    blocked[block]['mlp2'] = 0
+                if w0_diff < 0.005 and blocked[block]['w0'] < 2:
+                    blocked[block]['w0'] += 1
+                    if blocked[block]['w0'] == 2:
                         print(f"W0 block {block} blocked in epoch {epoch}")
-                        model.named_parameters()[f"blocks.{block}.attn.proj.weight"].requires_grad = False
+                        for name, param in model.named_parameters():
+                            if name == f"blocks.{block}.attn.proj.weight":
+                                param.requires_grad = False
+                                blocked_matrices.append(name)
+                elif blocked[block]['w0'] < 2:
+                    blocked[block]['w0'] = 0
 
-    last_model_dict = model.state_dict()
 
     df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
     df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
