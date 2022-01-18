@@ -186,8 +186,8 @@ for epoch in range(start_epoch, EPOCHS):
         if name in blocked_matrices and param.requires_grad:
             print(f"La matriu {name} s'esta modificant i hauria d'estar bloquejada!")
     
-    train_labels = []
-    train_pred = []
+    # train_labels = []
+    # train_pred = []
     for images, labels in dl_train:
         opt.zero_grad()
         images = images.to(device)
@@ -197,17 +197,17 @@ for epoch in range(start_epoch, EPOCHS):
             pred = pred[0]
         loss = get_loss(pred, labels)
         acc = get_accuracy(pred, labels)
-        train_pred.append(pred.cpu().detach().numpy())
-        train_labels.append(labels.cpu().detach().numpy())
+        # train_pred.append(pred.cpu().detach().numpy())
+        # train_labels.append(labels.cpu().detach().numpy())
         loss.backward()
         opt.step()
-    df_train[f"epoch_{epoch+1}_pred"] = train_pred
-    df_train[f"epoch_{epoch+1}_labels"] = train_labels
-    df_train.to_csv(f"results/{using_transformer}_epoch_{epoch+1}_train.csv")
+    # df_train[f"epoch_{epoch+1}_pred"] = train_pred
+    # df_train[f"epoch_{epoch+1}_labels"] = train_labels
+    # df_train.to_csv(f"results/{using_transformer}_epoch_{epoch+1}_train.csv")
     
     model.eval()
-    val_labels = []
-    val_pred = []
+    # val_labels = []
+    # val_pred = []
     with torch.no_grad():
         for images, labels in dl_test:
             images = images.to(device)
@@ -217,8 +217,8 @@ for epoch in range(start_epoch, EPOCHS):
             acc = get_accuracy(pred, labels)
             accs_test.append(acc * images.shape[0])            
             losses_test.append(loss * images.shape[0])
-            val_labels.append(labels.cpu().detach().numpy())
-            val_pred.append(pred.cpu().detach().numpy())
+            # val_labels.append(labels.cpu().detach().numpy())
+            # val_pred.append(pred.cpu().detach().numpy())
 
     if dynamic_block:
         if using_transformer in ['ViT', 'BEiT', 'DeiT']:
@@ -318,17 +318,18 @@ for epoch in range(start_epoch, EPOCHS):
                                     blocked_matrices.append(name)
                     elif blocked[block]['w0'] < 2:
                         blocked[block]['w0'] = 0
-    df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
-    df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
-    df_val.to_csv(f"results/{using_transformer}_epoch_{epoch}_val.csv")
+    # df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
+    # df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
+    # df_val.to_csv(f"results/{using_transformer}_epoch_{epoch}_val.csv")
+
     loss = torch.stack(losses_test).sum() / len(dl_test.dataset)
     acc = torch.stack(accs_test).sum() / len(dl_test.dataset)
     
-    try:
-        os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_train.csv")
-        os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_val.csv")
-    except:
-        continue
+    # try:
+    #     os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_train.csv")
+    #     os.system(f"rm results/{using_transformer}_epoch_{epoch-2}_val.csv")
+    # except:
+    #     continue
     acc_time = time.time() - start_time + previous_time
     print(f'Epoch: {epoch+1:>2}    Loss: {loss.item():.3f}    Accuracy: {acc:.3f}    Acu.Time: {acc_time:.3f}')
     # if previous_loss >= loss.item():
