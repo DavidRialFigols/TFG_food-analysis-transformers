@@ -223,12 +223,16 @@ for epoch in range(start_epoch, EPOCHS):
     if dynamic_block:
         if using_transformer in ['ViT', 'BEiT', 'DeiT']:
             for block in range(num_blocks[using_transformer]):
+                std_qkv = torch.std(torch.diff(last_model_dict[f'blocks.{block}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight']))
+                std_mlp1 = torch.std(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc1.weight']-model.state_dict()[f'blocks.{block}.mlp.fc1.weight']))
+                std_mlp2 = torch.std(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc2.weight']-model.state_dict()[f'blocks.{block}.mlp.fc2.weight']))
+                std_w0 = torch.std(torch.diff(last_model_dict[f'blocks.{block}.attn.proj.weight']-model.state_dict()[f'blocks.{block}.attn.proj.weight']))
                 qkv_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'blocks.{block}.attn.qkv.weight']-model.state_dict()[f'blocks.{block}.attn.qkv.weight']))).item()
                 mlp1_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc1.weight']-model.state_dict()[f'blocks.{block}.mlp.fc1.weight']))).item()
                 mlp2_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc2.weight']-model.state_dict()[f'blocks.{block}.mlp.fc2.weight']))).item()
                 w0_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'blocks.{block}.attn.proj.weight']-model.state_dict()[f'blocks.{block}.attn.proj.weight']))).item()
-                print(f"block {block} | qkv: {qkv_diff} | mlp1: {mlp1_diff} | mlp2: {mlp2_diff} | w: {w0_diff}")
-                if qkv_diff < 75 and blocked[block]['qkv'] < 75:
+                print(f"block {block} | qkv: {qkv_diff:.2f} | mlp1: {mlp1_diff:.2f} | mlp2: {mlp2_diff:.2f} | w: {w0_diff:.2f} | std qkv: {std_qkv:.3f} | std mlp1: {std_mlp1:.3f} | std mlp2: {std_mlp2:.3f} | std w0: {std_w0:.3f} | ")
+                if qkv_diff < 500 and blocked[block]['qkv'] < 75:
                     blocked[block]['qkv'] += 1
                     if blocked[block]['qkv'] == 2:
                         print(f"QKV block {block} blocked in epoch {epoch}")
@@ -238,7 +242,7 @@ for epoch in range(start_epoch, EPOCHS):
                                 blocked_matrices.append(name)
                 elif blocked[block]['qkv'] < 2:
                     blocked[block]['qkv'] = 0
-                if mlp1_diff < 200 and blocked[block]['mlp1'] < 2:
+                if mlp1_diff < 500 and blocked[block]['mlp1'] < 2:
                     blocked[block]['mlp1'] += 1
                     if blocked[block]['mlp1'] == 2:
                         print(f"MLP1 block {block} blocked in epoch {epoch}")
@@ -248,7 +252,7 @@ for epoch in range(start_epoch, EPOCHS):
                                 blocked_matrices.append(name)
                 elif blocked[block]['mlp1'] < 2:
                     blocked[block]['mlp1'] = 0
-                if mlp2_diff < 200 and blocked[block]['mlp2'] < 2:
+                if mlp2_diff < 500 and blocked[block]['mlp2'] < 2:
                     blocked[block]['mlp2'] += 1
                     if blocked[block]['mlp2'] == 2:
                         print(f"MLP2 block {block} blocked in epoch {epoch}")
@@ -277,7 +281,7 @@ for epoch in range(start_epoch, EPOCHS):
                     mlp1_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc1.weight']-model.state_dict()[f'blocks.{block}.mlp.fc1.weight'])).item())
                     mlp2_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.mlp.fc2.weight']-model.state_dict()[f'blocks.{block}.mlp.fc2.weight'])).item())
                     w0_diff = abs(torch.sum(torch.diff(last_model_dict[f'blocks.{block}.attn.proj.weight']-model.state_dict()[f'blocks.{block}.attn.proj.weight'])).item())
-                    print(f"block {block} | qkv: {qkv_diff} | mlp1: {mlp1_diff} | mlp2: {mlp2_diff} | w: {w0_diff}")
+                    print(f"block {block} | qkv: {qkv_diff:.2f} | mlp1: {mlp1_diff:.2f} | mlp2: {mlp2_diff:.2f} | w: {w0_diff:.2f}")
                     if qkv_diff < 0.005 and blocked[block]['qkv'] < 2:
                         blocked[block]['qkv'] += 1
                         if blocked[block]['qkv'] == 2:
