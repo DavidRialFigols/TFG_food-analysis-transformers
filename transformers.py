@@ -186,8 +186,8 @@ for epoch in range(start_epoch, EPOCHS):
         if name in blocked_matrices and param.requires_grad:
             print(f"La matriu {name} s'esta modificant i hauria d'estar bloquejada!")
     
-#    train_labels = []
-#    train_pred = []
+    # train_labels = []
+    # train_pred = []
     for images, labels in dl_train:
         opt.zero_grad()
         images = images.to(device)
@@ -197,17 +197,17 @@ for epoch in range(start_epoch, EPOCHS):
             pred = pred[0]
         loss = get_loss(pred, labels)
         acc = get_accuracy(pred, labels)
-#        train_pred.append(pred.cpu().detach().numpy())
-#        train_labels.append(labels.cpu().detach().numpy())
+        # train_pred.append(pred.cpu().detach().numpy())
+        # train_labels.append(labels.cpu().detach().numpy())
         loss.backward()
         opt.step()
-#    df_train[f"epoch_{epoch+1}_pred"] = train_pred
-#    df_train[f"epoch_{epoch+1}_labels"] = train_labels
-#    df_train.to_csv(f"results/{using_transformer}_epoch_{epoch+1}_train.csv")
+    # df_train[f"epoch_{epoch+1}_pred"] = train_pred
+    # df_train[f"epoch_{epoch+1}_labels"] = train_labels
+    # df_train.to_csv(f"results/{using_transformer}_epoch_{epoch+1}_train.csv")
     
     model.eval()
-#    val_labels = []
-#    val_pred = []
+    # val_labels = []
+    # val_pred = []
     with torch.no_grad():
         for images, labels in dl_test:
             images = images.to(device)
