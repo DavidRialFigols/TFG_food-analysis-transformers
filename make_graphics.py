@@ -327,9 +327,9 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
             k11.append(k)
             v11.append(v)
         for l in range(1, len(q11)):
-            q_diffs[f"block{n}"].append(torch.sum(torch.abs(torch.diff(q11[l]-q11[l-1]))).item())
-            k_diffs[f"block{n}"].append(torch.sum(torch.abs(torch.diff(k11[l]-k11[l-1]))).item())
-            v_diffs[f"block{n}"].append(torch.sum(torch.abs(torch.diff(v11[l]-v11[l-1]))).item())
+            q_diffs[f"block{n}"].append(torch.sum(torch.abs(q11[l]-q11[l-1])).item())
+            k_diffs[f"block{n}"].append(torch.sum(torch.abs(k11[l]-k11[l-1])).item())
+            v_diffs[f"block{n}"].append(torch.sum(torch.abs(v11[l]-v11[l-1])).item())
 
     # plot the graphs
     q_diffs = pd.DataFrame(q_diffs)
@@ -552,7 +552,7 @@ def graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fi
  #               mlp_ranks[f"block{n}"].append(torch.linalg.matrix_rank(mlp[l], tol=0.1).item())
  #               mlp_norms[f"block{n}"].append(torch.linalg.matrix_norm(mlp[l]).item())
             for l in range(1, len(mlp)):
-                mlp_diffs[f"block{n}"].append(torch.sum(torch.abs(torch.diff(mlp[l]-mlp[l-1]))).item())
+                mlp_diffs[f"block{n}"].append(torch.sum(torch.abs(mlp[l]-mlp[l-1])).item())
                 
             # plot the graphs
 #            mlp_svdvals = mlp_svdvals
@@ -727,7 +727,7 @@ def graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig
 #            w0_ranks[f"block{n}"].append(torch.linalg.matrix_rank(w0[l], tol=0.1).item())
 #            w0_norms[f"block{n}"].append(torch.linalg.matrix_norm(w0[l]).item())
         for l in range(1, len(w0)):
-            w0_diffs[f"block{n}"].append(torch.sum(torch.abs(torch.diff(w0[l]-w0[l-1]))).item())
+            w0_diffs[f"block{n}"].append(torch.sum(torch.abs(w0[l]-w0[l-1])).item())
 
         # plot the graphs
 #        w0_svdvals = w0_svdvals
@@ -858,9 +858,9 @@ def graphics_global_variables(models_dict, using_transformer, mat_size, num_bloc
     if has_positional_embedding: pe_diffs = {}
     if has_distillation_token: dt_diffs = {}
     for epoch in range(1, len(ct)):
-        ct_diffs[f'{epoch}'] = [torch.sum(torch.abs(torch.diff(ct[epoch]-ct[epoch-1]))).item()]
-        if has_positional_embedding: pe_diffs[f'{epoch}'] = [torch.sum(torch.abs(torch.diff(pe[epoch]-pe[epoch-1]))).item()]
-        if has_distillation_token: dt_diffs[f'{epoch}'] = [torch.sum(torch.abs(torch.diff(dt[epoch]-dt[epoch-1]))).item()]
+        ct_diffs[f'{epoch}'] = [torch.sum(torch.abs(ct[epoch]-ct[epoch-1])).item()]
+        if has_positional_embedding: pe_diffs[f'{epoch}'] = [torch.sum(torch.abs(pe[epoch]-pe[epoch-1])).item()]
+        if has_distillation_token: dt_diffs[f'{epoch}'] = [torch.sum(torch.abs(dt[epoch]-dt[epoch-1])).item()]
     
     ct_diffs = pd.DataFrame(ct_diffs).T
     fig, ax = plt.subplots(figsize=fig_size)
