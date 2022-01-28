@@ -885,31 +885,135 @@ def graphics_global_variables(models_dict, using_transformer, mat_size, num_bloc
         plt.savefig(f"{output}_dt_diffs.png", dpi=750)
         plt.close()
 
+def graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer=False):
+    q_dets = {}
+    k_dets = {}
+    v_dets = {}
+    w0_dets = {}
+    mlp1_dets = {}
+    mlp2_dets = {}
+    for n in range(num_blocks):
+        q11 = []
+        k11 = []
+        v11 = []
+        w0_11 = []
+        mlp1_11 = []
+        mlp2_11 = []
+        q_dets[f'block{n}'] = []
+        k_dets[f'block{n}'] = []
+        v_dets[f'block{n}'] = []
+        w0_dets[f'block{n}'] = []
+        mlp1_dets[f'block{n}'] = []
+        mlp2_dets[f'block{n}'] = []
+        if using_transformer == "CSWin":
+            i_qkv = f'stage{layer}.{n}.qkv.weight'
+            i_w0 = f'stage{layer}.{n}.proj.weight'
+            i_mlp1 = f'stage{layer}.{n}.mlp.fc1.weight'
+            i_mlp2 = f'stage{layer}.{n}.mlp.fc2.weight'
+            op_q = f"grafics/{using_transformer}_stage{layer}_det_q"
+            op_k = f"grafics/{using_transformer}_stage{layer}_det_k"
+            op_v = f"grafics/{using_transformer}_stage{layer}_det_v"
+            op_mlp1 = f"grafics/{using_transformer}_stage{layer}_det_mlp1"
+            op_mlp2 = f"grafics/{using_transformer}_stage{layer}_det_mlp2"
+            op_w0 = f"grafics/{using_transformer}_stage{layer}_det_w0"
+        elif using_transformer == "SWin":
+            i_qkv = f'layers.{layer}.blocks.{n}.attn.qkv.weight'
+            i_w0 = f'layers.{layer}.blocks.{n}.attn.proj.weight'
+            i_mlp1 = f'layers.{layer}.blocks.{n}.mlp.fc1.weight'
+            i_mlp2 = f'layers.{layer}.blocks.{n}.mlp.fc2.weight'
+            op_q = f"grafics/{using_transformer}_layer-{layer}_det_q"
+            op_k = f"grafics/{using_transformer}_layer-{layer}_det_k"
+            op_v = f"grafics/{using_transformer}_layer-{layer}_det_v"
+            op_w0 = f"grafics/{using_transformer}_layer-{layer}_det_w0"
+            op_mlp1 = f"grafics/{using_transformer}_layer-{layer}_det_mlp1"
+            op_mlp2 = f"grafics/{using_transformer}_layer-{layer}_det_mlp2"
+        else:
+            i_qkv = f'blocks.{n}.attn.qkv.weight'
+            i_w0 = f'blocks.{n}.attn.proj.weight'
+            i_mlp1 = f'blocks.{n}.mlp.fc1.weight'
+            i_mlp2 = f'blocks.{n}.mlp.fc2.weight'
+            op_q = f"grafics/{using_transformer}_det_q"
+            op_k = f"grafics/{using_transformer}_det_k"
+            op_v = f"grafics/{using_transformer}_det_v"
+            op_w0 = f"grafics/{using_transformer}_det_w0"
+            op_mlp1 = f"grafics/{using_transformer}_det_mlp1"
+            op_mlp2 = f"grafics/{using_transformer}_det_mlp2"
+        for j in atributes_model[i_qkv]:
+            q = j[:mat_size]
+            k = j[mat_size:mat_size*2]
+            v = j[mat_size*2:mat_size*3]
+            q11.append(q)
+            k11.append(k)
+            v11.append(v)
+        for j in atributes_model[i_w0]:
+            w0_11.append(j)
+        for j in atributes_model[i_mlp1]:
+            mlp1_11.append(j)
+        for j in atributes_model[i_mlp2]:
+            mlp2_11.append(j)
+        for l in range(len(q11)):
+            q_dets[f"block{n}"].append(torch.linalg.det(q11[l]).item())
+            k_dets[f"block{n}"].append(torch.linalg.det(k11[l]).item())
+            v_dets[f"block{n}"].append(torch.linalg.det(v11[l]).item())
+            w0_dets[f"block{n}"].append(torch.linalg.det(w0_11[l]).item())
+
+    # plot the graphs
+    q_dets = pd.DataFrame(q_dets)
+    k_dets = pd.DataFrame(k_dets)
+    v_dets = pd.DataFrame(v_dets)
+    w0_dets = pd.DataFrame(w0_dets)
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=q_dets.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the determinants of the W_Q matrices", ylabel="Determinant", xlabel = "Epoch")
+    plt.legend(labels=q_dets.columns, loc='upper right')
+    plt.savefig(f"{op_q}.png", dpi=750)
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=k_dets.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the determinants of the W_K matrices", ylabel="Determinant", xlabel = "Epoch")
+    plt.legend(labels=k_dets.columns, loc='upper right')
+    plt.savefig(f"{op_k}.png", dpi=750)
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=v_dets.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the determinants of the W_V matrices", ylabel="Determinant", xlabel = "Epoch")
+    plt.legend(labels=v_dets.columns, loc='upper right')
+    plt.savefig(f"{op_v}.png", dpi=750)
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=w0_dets.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the determinants of the W0 matrices", ylabel="Determinant", xlabel = "Epoch")
+    plt.legend(labels=w0_dets.columns, loc='upper right')
+    plt.savefig(f"{op_w0}.png", dpi=750)
+    plt.close()
+
 if using_transformer in ['ViT', 'BEiT', 'DeiT']:
     mat_size = 768
     num_blocks = 12
-    print('starting sv blocks')
-    #graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting sv epochs')
-    #graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting ranks')
-    #graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting norms')
-    #graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting diff epochs')
-    graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting mlp blocks')
-    graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    print('starting w0 blocks')
-    graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    if using_transformer == 'ViT':
-        pe, dt = True, False
-    elif using_transformer == 'BEiT':
-        pe, dt = False, False
-    elif using_transformer == 'DeiT':
-        pe, dt = True, True
-    print('starting global variables')
-    graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
+    # print('starting sv blocks')
+    # graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting sv epochs')
+    # graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting ranks')
+    # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting norms')
+    # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting diff epochs')
+    # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting mlp blocks')
+    # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting w0 blocks')
+    # graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # if using_transformer == 'ViT':
+    #     pe, dt = True, False
+    # elif using_transformer == 'BEiT':
+    #     pe, dt = False, False
+    # elif using_transformer == 'DeiT':
+    #     pe, dt = True, True
+    # print('starting global variables')
+    # graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
+    print('starting graphics deteminants')
+    graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size)
 
 if using_transformer in ['CSWin', 'SWin']:
     for layer in range(4):
@@ -918,29 +1022,31 @@ if using_transformer in ['CSWin', 'SWin']:
         layer = str(layer)
         num_blocks = layers[using_transformer][layer][0]
         mat_size = layers[using_transformer][layer][1]
-        print('starting sv blocks')
-        #graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting sv epochs')
-        #graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting ranks qkv')
-        #graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting norms qkv')
-        #graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting diffs qkv')
-        graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting mlp')
-        graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        print('starting w0')
-        graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-    print('starting sv layers blocks qkv')
-    #graphics_sv_layers_blocks(models_dict, using_transformer, fig_size, layers)
-    print('starting sv layers epochs qkv')
-    #graphics_sv_layers_epochs(models_dict, using_transformer, fig_size, layers)
-    print('starting sv layers blocks mlp')
-    #graphics_sv_layers_blocks_mlp(models_dict, using_transformer, fig_size, layers)
-    print('starting sv layers epochs mlp')
-    #graphics_sv_layers_epochs_mlp(models_dict, using_transformer, fig_size, layers)
-    print('starting sv layers blocks w0')
-    #graphics_sv_layers_blocks_w0(models_dict, using_transformer, fig_size, layers)
-    print('starting sv layers epochs w0')
-    #graphics_sv_layers_epochs_w0(models_dict, using_transformer, fig_size, layers)
+        print('starting graphics determinants')
+        graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting sv blocks')
+        # graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting sv epochs')
+        # graphics_sv_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting ranks qkv')
+        # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting norms qkv')
+        # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting diffs qkv')
+        # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting mlp')
+        # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting w0')
+        # graphics_w0_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+    # print('starting sv layers blocks qkv')
+    # graphics_sv_layers_blocks(models_dict, using_transformer, fig_size, layers)
+    # print('starting sv layers epochs qkv')
+    # graphics_sv_layers_epochs(models_dict, using_transformer, fig_size, layers)
+    # print('starting sv layers blocks mlp')
+    # graphics_sv_layers_blocks_mlp(models_dict, using_transformer, fig_size, layers)
+    # print('starting sv layers epochs mlp')
+    # graphics_sv_layers_epochs_mlp(models_dict, using_transformer, fig_size, layers)
+    # print('starting sv layers blocks w0')
+    # graphics_sv_layers_blocks_w0(models_dict, using_transformer, fig_size, layers)
+    # print('starting sv layers epochs w0')
+    # graphics_sv_layers_epochs_w0(models_dict, using_transformer, fig_size, layers)
