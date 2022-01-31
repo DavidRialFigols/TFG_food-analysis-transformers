@@ -26,15 +26,19 @@ parser.add_argument('-g', '--gpu', help='GPU to use', required=True, type=str)
 parser.add_argument('-l', '--load_pretrain', help='directory with model', type=str)
 parser.add_argument('-e', '--start_epoch', help='last epoch of the pretrained model', type=int)
 parser.add_argument('-d', '--dynamic_block', default=False, action='store_true')
+parser.add_argument('-svd', '--svd', default=False, action='store_true')
+
 
 random.seed(42)
 num_classes = 101
-using_dataset = f"food-{num_classes}"
+using_dataset = f"davidrf_food-101"
 using_transformer = parser.parse_args().transformer
 using_gpu = parser.parse_args().gpu
 load_pretrain = parser.parse_args().load_pretrain
 start_epoch = parser.parse_args().start_epoch
 dynamic_block = parser.parse_args().dynamic_block
+svd_decomposition = parser.parse_args().svd
+
 
 models_transformers = {
     'ViT': 'vit_base_patch16_224_in21k',
@@ -67,8 +71,8 @@ data_transform_test = transforms.Compose(
                                   std=[0.229, 0.224, 0.225]),
              ])
 
-ds_train = datasets.ImageFolder(f"{using_dataset}/train", transform=data_transform_train)
-ds_test = datasets.ImageFolder(f"{using_dataset}/test", transform=data_transform_test)
+ds_train = datasets.ImageFolder(f"/media/HDD_4TB_1/Datasets/{using_dataset}/train", transform=data_transform_train)
+ds_test = datasets.ImageFolder(f"/media/HDD_4TB_1/Datasets/{using_dataset}/test", transform=data_transform_test)
 
 BATCH_SIZE = 32
 dl_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
@@ -112,7 +116,8 @@ model = timm.create_model(models_transformers[using_transformer], pretrained=Tru
 opt = create_optimizer_v2(model, lr=1e-3)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device(f"cuda:{using_gpu}")
+#device = torch.device(f"cuda:{using_gpu}")
+#device = 
 
 if using_transformer == 'CSWin':
     model = load_checkpoint(model, 'cswin_base_224.pth')
@@ -182,6 +187,8 @@ for epoch in range(start_epoch, EPOCHS):
     last_model_dict = copy.deepcopy(model.state_dict())
     losses_test, accs_test = [], []
     model.train()
+    if svd_decomposition:
+        model.compute_svd()
     for name, param in model.named_parameters():
         if name in blocked_matrices and param.requires_grad:
             print(f"La matriu {name} s'esta modificant i hauria d'estar bloquejada!")
@@ -277,51 +284,51 @@ for epoch in range(start_epoch, EPOCHS):
                 if using_transformer == 'CSWin':
                     layer += 1
                 for block in range(num_blocks[using_transformer][layer]):
-                    qkv_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'layers.{layer}.blocks.{block}.attn.qkv.weight']-model.state_dict()[f'layers.{layer}.blocks.{block}.attn.qkv.weight']))).item()
-                    mlp1_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'layers.{layer}.blocks.{block}.mlp.fc1.weight']-model.state_dict()[f'layers.{layer}.blocks.{block}.mlp.fc1.weight']))).item()
-                    mlp2_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'layers.{layer}.blocks.{block}.mlp.fc2.weight']-model.state_dict()[f'layers.{layer}.blocks.{block}.mlp.fc2.weight']))).item()
-                    w0_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'layers.{layer}.blocks.{block}.attn.proj.weight']-model.state_dict()[f'layers.{layer}.blocks.{block}.attn.proj.weight']))).item()
+                    qkv_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'stage{layer}.{block}.qkv.weight']-model.state_dict()[f'stage{layer}.{block}.qkv.weight']))).item()
+                    mlp1_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'stage{layer}.{block}.mlp.fc1.weight']-model.state_dict()[f'stage{layer}.{block}.mlp.fc1.weight']))).item()
+                    mlp2_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'stage{layer}.{block}.mlp.fc2.weight']-model.state_dict()[f'stage{layer}.{block}.mlp.fc2.weight']))).item()
+                    w0_diff = torch.sum(torch.abs(torch.diff(last_model_dict[f'stage{layer}.{block}.proj.weight']-model.state_dict()[f'stage{layer}.{block}.proj.weight']))).item()
                     print(f"layer {layer} | block {block} | qkv: {qkv_diff:.2f} | mlp1: {mlp1_diff:.2f} | mlp2: {mlp2_diff:.2f} | w: {w0_diff:.2f}")
-                    if ((layer==0 and qkv_diff < 50) or (layer==0 and qkv_diff < 75) or (layer==2 and qkv_diff < 100) or (layer==3 and qkv_diff < 200)) and blocked[layer][block]['qkv'] < 2 :
-                        blocked[layer][block]['qkv'] += 1
-                        if blocked[layer][block]['qkv'] == 2:
+                    if ((layer==1 and qkv_diff < 15) or (layer==2 and qkv_diff < 20) or (layer==3 and qkv_diff < 30) or (layer==4 and qkv_diff < 30)) and blocked[layer-1][block]['qkv'] < 2 :
+                        blocked[layer-1][block]['qkv'] += 1
+                        if blocked[layer-1][block]['qkv'] == 2:
                             print(f"QKV block {block} blocked in epoch {epoch}")
                             for name, param in model.named_parameters():
-                                if name == f"layers.{layer}.blocks.{block}.attn.qkv.weight":
+                                if name == f"stage{layer}.{block}.qkv.weight":
                                     param.requires_grad = False
                                     blocked_matrices.append(name)
-                    elif blocked[layer][block]['qkv'] < 2:
-                        blocked[layer][block]['qkv'] = 0
-                    if ( (layer==0 and mlp1_diff < 50) or (layer==1 and mlp1_diff < 100) or (layer==2 and mlp1_diff < 150) or (layer==3 and mlp1_diff < 300) ) and blocked[layer][block]['mlp1'] < 2:
-                        blocked[layer][block]['mlp1'] += 1
-                        if blocked[layer][block]['mlp1'] == 2:
+                    elif blocked[layer-1][block]['qkv'] < 2:
+                        blocked[layer-1][block]['qkv'] = 0
+                    if ( (layer==1 and mlp1_diff < 15) or (layer==2 and mlp1_diff < 20) or (layer==3 and mlp1_diff < 25) or (layer==4 and mlp1_diff < 25) ) and blocked[layer-1][block]['mlp1'] < 2:
+                        blocked[layer-1][block]['mlp1'] += 1
+                        if blocked[layer-1][block]['mlp1'] == 2:
                             print(f"MLP1 block {block} blocked in epoch {epoch}")
                             for name, param in model.named_parameters():
-                                if name == f"layers.{layer}.blocks.{block}.mlp.fc1.weight":
+                                if name == f"stage{layer}.{block}.mlp.fc1.weight":
                                     param.requires_grad = False
                                     blocked_matrices.append(name)
-                    elif blocked[layer][block]['mlp1'] < 2:
-                        blocked[layer][block]['mlp1'] = 0
-                    if ( (layer==0 and mlp2_diff < 50) or (layer==1 and mlp2_diff < 100) or (layer==2 and mlp2_diff < 150) or (layer==3 and mlp2_diff < 300) ) and blocked[layer][block]['mlp2'] < 2:
-                        blocked[layer][block]['mlp2'] += 1
-                        if blocked[layer][block]['mlp2'] == 2:
+                    elif blocked[layer-1][block]['mlp1'] < 2:
+                        blocked[layer-1][block]['mlp1'] = 0
+                    if ( (layer==1 and mlp2_diff < 15) or (layer==2 and mlp2_diff < 20) or (layer==3 and mlp2_diff < 25) or (layer==4 and mlp2_diff < 25) ) and blocked[layer-1][block]['mlp2'] < 2:
+                        blocked[layer-1][block]['mlp2'] += 1
+                        if blocked[layer-1][block]['mlp2'] == 2:
                             print(f"MLP2 block {block} blocked in epoch {epoch}")
                             for name, param in model.named_parameters():
-                                if name == f"layers.{layer}.blocks.{block}.mlp.fc2.weight":
+                                if name == f"stage{layer}.{block}.mlp.fc2.weight":
                                     param.requires_grad = False
                                     blocked_matrices.append(name)
-                    elif blocked[layer][block]['mlp2'] < 2:
-                        blocked[layer][block]['mlp2'] = 0
-                    if ( (layer==0 and w0_diff < 25) or (layer==1 and w0_diff < 50) or (layer==2 and w0_diff < 75) or (layer==3 and w0_diff < 250) ) and blocked[layer][block]['w0'] < 2:
-                        blocked[layer][block]['w0'] += 1
-                        if blocked[layer][block]['w0'] == 2:
+                    elif blocked[layer-1][block]['mlp2'] < 2:
+                        blocked[layer-1][block]['mlp2'] = 0
+                    if ( (layer==1 and w0_diff < 10) or (layer==2 and w0_diff < 20) or (layer==3 and w0_diff < 25) or (layer==4 and w0_diff < 25) ) and blocked[layer-1][block]['w0'] < 2:
+                        blocked[layer-1][block]['w0'] += 1
+                        if blocked[layer-1][block]['w0'] == 2:
                             print(f"W0 block {block} blocked in epoch {epoch}")
                             for name, param in model.named_parameters():
-                                if name == f"layers.{layer}.blocks.{block}.attn.proj.weight":
+                                if name == f"stage{layer}.{block}.proj.weight":
                                     param.requires_grad = False
                                     blocked_matrices.append(name)
-                    elif blocked[layer][block]['w0'] < 2:
-                        blocked[layer][block]['w0'] = 0
+                    elif blocked[layer-1][block]['w0'] < 2:
+                        blocked[layer-1][block]['w0'] = 0
 #    df_val[f"{using_transformer}_epoch_{epoch}_pred"] = val_pred
 #    df_val[f"{using_transformer}_epoch_{epoch}_labels"] = val_labels
 #    df_val.to_csv(f"results/{using_transformer}_epoch_{epoch}_val.csv")
