@@ -1027,8 +1027,8 @@ if using_transformer in ['ViT', 'BEiT', 'DeiT']:
     # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
     # print('starting norms')
     # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size)
-    # print('starting diff epochs')
-    # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    print('starting diff epochs')
+    graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size)
     # print('starting mlp blocks')
     # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size)
     # print('starting w0 blocks')
@@ -1041,8 +1041,8 @@ if using_transformer in ['ViT', 'BEiT', 'DeiT']:
     #     pe, dt = True, True
     # print('starting global variables')
     # graphics_global_variables(models_dict, using_transformer, mat_size, num_blocks, fig_size, pe, dt)
-    print('starting graphics deteminants')
-    graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size)
+    # print('starting graphics deteminants')
+    # graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size)
 
 if using_transformer in ['CSWin', 'SWin']:
     for layer in range(4):
@@ -1051,8 +1051,8 @@ if using_transformer in ['CSWin', 'SWin']:
         layer = str(layer)
         num_blocks = layers[using_transformer][layer][0]
         mat_size = layers[using_transformer][layer][1]
-        print('starting graphics determinants')
-        graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        # print('starting graphics determinants')
+        # graphics_determinants(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
         # print('starting sv blocks')
         # graphics_sv_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
         # print('starting sv epochs')
@@ -1061,8 +1061,8 @@ if using_transformer in ['CSWin', 'SWin']:
         # graphics_ranks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
         # print('starting norms qkv')
         # graphics_norms(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
-        # print('starting diffs qkv')
-        # graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
+        print('starting diffs qkv')
+        graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
         # print('starting mlp')
         # graphics_mlp_blocks(models_dict, using_transformer, mat_size, num_blocks, fig_size, layer)
         # print('starting w0')
