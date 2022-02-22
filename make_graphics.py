@@ -303,6 +303,9 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
     q_diffs = {}
     k_diffs = {}
     v_diffs = {}
+    q_diffs_2 = {}
+    k_diffs_2 = {}
+    v_diffs_2 = {}
     for n in range(num_blocks):
         q11 = []
         k11 = []
@@ -310,6 +313,9 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
         q_diffs[f'block{n}'] = []
         k_diffs[f'block{n}'] = []
         v_diffs[f'block{n}'] = []
+        q_diffs_2[f'block{n}'] = []
+        k_diffs_2[f'block{n}'] = []
+        v_diffs_2[f'block{n}'] = []
         if using_transformer == "CSWin":
             i = f'stage{layer}.{n}.qkv.weight'
             output = f"grafics/{using_transformer}_stage{layer}_diffs_"
@@ -330,27 +336,46 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
             q_diffs[f"block{n}"].append(torch.sum(torch.abs(q11[l]-q11[l-1])).item())
             k_diffs[f"block{n}"].append(torch.sum(torch.abs(k11[l]-k11[l-1])).item())
             v_diffs[f"block{n}"].append(torch.sum(torch.abs(v11[l]-v11[l-1])).item())
+            q_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(q11[l]-q11[l-1]).item())/(mat_size*mat_size), torch.std(q11[l]-q11[l-1], unbiased=False)))
+            k_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(k11[l]-k11[l-1]).item())/(mat_size*mat_size), torch.std(k11[l]-k11[l-1], unbiased=False)))
+            v_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(v11[l]-v11[l-1]).item())/(mat_size*mat_size), torch.std(v11[l]-v11[l-1], unbiased=False)))
 
     # plot the graphs
     q_diffs = pd.DataFrame(q_diffs)
     k_diffs = pd.DataFrame(k_diffs)
     v_diffs = pd.DataFrame(v_diffs)
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=q_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the Q matrices", ylabel="Absolute difference", xlabel = "Epoch")
-    plt.legend(labels=q_diffs.columns, loc='upper right')
+    sns.lineplot(data=q_diffs.iloc[:200, :], markers=True, legend=False)
     plt.savefig(f"{output}q.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=k_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the K matrices", ylabel="Absolute difference", xlabel = "Epoch")
-    plt.legend(labels=k_diffs.columns, loc='upper right')
+    sns.lineplot(data=k_diffs.iloc[:200, :], markers=True, legend=False)
     plt.savefig(f"{output}k.png", dpi=750)
     plt.close()
 
     fig, ax = plt.subplots(figsize=fig_size)
-    sns.lineplot(data=v_diffs.iloc[:200, :], markers=True, legend=False).set(title=f"{using_transformer} - Evolution of the differences between consecutive epochs in the V matrices", ylabel="Absolute difference", xlabel = "Epoch")
-    plt.legend(labels=v_diffs.columns, loc='upper right')
+    sns.lineplot(data=v_diffs.iloc[:200, :], markers=True, legend=False)
     plt.savefig(f"{output}v.png", dpi=750)
+    plt.close()
+
+    # plot the graphs
+    q_diffs_2 = pd.DataFrame(q_diffs_2)
+    k_diffs_2 = pd.DataFrame(k_diffs_2)
+    v_diffs_2 = pd.DataFrame(v_diffs_2)
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=q_diffs_2.iloc[:200, :], markers=True, legend=False)
+    plt.savefig(f"{output}q_2.png", dpi=750)
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=k_diffs_2.iloc[:200, :], markers=True, legend=False)
+    plt.savefig(f"{output}k_2.png", dpi=750)
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(data=v_diffs_2.iloc[:200, :], markers=True, legend=False)
+    plt.savefig(f"{output}v_2.png", dpi=750)
     plt.close()
 
 def graphics_sv_layers_epochs(models_dict, using_transformer, fig_size, layers):
