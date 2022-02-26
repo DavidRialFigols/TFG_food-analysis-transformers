@@ -336,9 +336,9 @@ def graphics_diff_epochs(models_dict, using_transformer, mat_size, num_blocks, f
             q_diffs[f"block{n}"].append(torch.sum(torch.abs(q11[l]-q11[l-1])).item())
             k_diffs[f"block{n}"].append(torch.sum(torch.abs(k11[l]-k11[l-1])).item())
             v_diffs[f"block{n}"].append(torch.sum(torch.abs(v11[l]-v11[l-1])).item())
-            q_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(q11[l]-q11[l-1]).item())/(mat_size*mat_size), torch.std(q11[l]-q11[l-1], unbiased=False).item()))
-            k_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(k11[l]-k11[l-1]).item())/(mat_size*mat_size), torch.std(k11[l]-k11[l-1], unbiased=False).item()))
-            v_diffs_2[f"block{n}"].append(max(0.05*abs(torch.sum(v11[l]-v11[l-1]).item())/(mat_size*mat_size), torch.std(v11[l]-v11[l-1], unbiased=False).item()))
+            q_diffs_2[f"block{n}"].append(mat_size*mat_size*max(0.05*abs(torch.sum(q11[l]-q11[l-1]).item())/(mat_size*mat_size), torch.std(q11[l]-q11[l-1], unbiased=False).item()))
+            k_diffs_2[f"block{n}"].append(mat_size*mat_size*max(0.05*abs(torch.sum(k11[l]-k11[l-1]).item())/(mat_size*mat_size), torch.std(k11[l]-k11[l-1], unbiased=False).item()))
+            v_diffs_2[f"block{n}"].append(mat_size*mat_size*max(0.05*abs(torch.sum(v11[l]-v11[l-1]).item())/(mat_size*mat_size), torch.std(v11[l]-v11[l-1], unbiased=False).item()))
 
     # plot the graphs
     q_diffs = pd.DataFrame(q_diffs)
